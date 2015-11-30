@@ -7,8 +7,12 @@
 # Based on the instructions available on the web for building rtl-sdr
 # depends: git, cmake, autotools, libusb-1.0-0, libusb-1.0-0-dev, etc.
 
+# Where the build will happen (this is related to the project name in git)
+BUILD="rtl-sdr"
+
 # Where to find the RTL-SDR sources via GIT
-GITURL="git://git.osmocom.org/rtl-sdr.git"
+GITURL="git://git.osmocom.org/$BUILD.git"
+
 # Whether to 'install udev rules'
 UDEV="yes"
 
@@ -18,19 +22,26 @@ if [ ! -z "$1" ]; then
 	CMD="$1"
 fi
 
+echo "BUILD: $BUILD"
+echo "GITURL: $GITURL"
+echo "UDEV: $UDEV"
+echo "CMD: $CMD"
+
+#exit 0
+
 # Define some functions 
 
 # CMAKE Build
 function cmake_build () {
 	echo "Running CMAKE Builder"
-	cd rtl-sdr/
+	cd $BUILD/
 	mkdir build
 	cd build
-    if [ $UDEV == "yes" ]; then
+	if [ $UDEV == "yes" ]; then
 		cmake ../ -DINSTALL_UDEV_RULES=ON
-    else
+	else
 		cmake ../
-    fi
+	fi
 	make
 	sudo make install
 	sudo ldconfig
@@ -39,7 +50,7 @@ function cmake_build () {
 # Autotools build
 function autotool_build () {
 	echo "Running Autotool Builder"
-	cd rtl-sdr/
+	cd $BUILD/
 	autoreconf -i
 	./configure
 	make
@@ -52,14 +63,19 @@ function git_sources() {
 	git clone ${GITURL}
 }
 
+if [ -d "$BUILD" ]; then
+	echo "BUILD Folder already exists! Please remove to re-build!"
+	exit 1
+fi
+
 git_sources
 
 if [ $CMD == "cmake" ]; then
-  cmake_build && sudo make install-udev-rules
+	cmake_build && sudo make install-udev-rules
 fi
 
 if [ $CMD == "auto" ]; then
-  autotool_build && sudo make install-udev-rules
+	autotool_build && sudo make install-udev-rules
 fi
 
 exit 0
