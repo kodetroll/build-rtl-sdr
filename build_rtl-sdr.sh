@@ -7,6 +7,37 @@
 # Based on the instructions available on the web for building rtl-sdr
 # depends: git, cmake, autotools, libusb-1.0-0, libusb-1.0-0-dev, etc.
 
+PLIST=""
+MISSING="NO"
+function check_package {
+#  echo "PKG: $1"
+  CPKG=`dpkg --get-selections | grep -F $1`
+#  echo "CPKG: $CPKG"
+}
+
+function check_package_missing {
+  check_package $PKG
+  if [ "$CPKG" == "" ]; then
+    echo "$PKG is missing"
+    MISSING="YES"
+    PLIST=${PLIST}" $PKG"
+  fi
+}
+
+PKGS="libusb-1.0-0-dev libportaudio2 build-essential cmake"
+for PKG in $PKGS; do
+#PKG="libusb-1.0-0-dev"
+  check_package_missing $PKG
+done
+
+if [ $MISSING == "YES" ]; then
+  echo "Missing Packages"
+  echo "sudo apt-get install $PLIST"
+  exit 0
+fi
+
+exit 0
+
 # Where the build will happen (this is related to the project name in git)
 BUILD="rtl-sdr"
 
