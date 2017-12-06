@@ -6,9 +6,14 @@
 # Author: Kodetroll (KB4OID)
 # Based on the instructions available on the web for building rtl-sdr
 # depends: git, cmake, autotools, libusb-1.0-0, libusb-1.0-0-dev, etc.
+#
+# usage: 
+#  cmd> './build_rtl_sdr.sh {auto|cmake} {yes|no}'
+#
 
 PLIST=""
 MISSING="NO"
+
 # list of required packages
 PKGS="libusb-1.0-0-dev libportaudio2 build-essential cmake"
 
@@ -18,11 +23,23 @@ BUILD="rtl-sdr"
 # Where to find the RTL-SDR sources via GIT
 GITURL="git://git.osmocom.org/$BUILD.git"
 
-# Whether to 'install udev rules'
-UDEV="yes"
-
 # Set default 'cmd' to 'cmake' (or 'auto')
 CMD="cmake"
+
+# Set cmd spec based on $1
+MSTYLE=$CMD
+if [ ! -z "$1" ]; then
+  MSTYLE=$1
+fi
+
+# Whether to 'install udev rules'
+#UDEV="no"
+UDEV="yes"
+if [ ! -z "$2" ]; then
+  UDEV=$2
+fi
+
+# ===== start of functions =====
 
 # Define some functions
 
@@ -49,13 +66,15 @@ function cmake_build () {
   echo "Creating build folder"
   mkdir build
   cd build
-  if [ $UDEV == "yes" ]; then
-    echo "running cmake with udev on"
-    cmake ../ -DINSTALL_UDEV_RULES=ON
-  else
-    echo "running cmake with udev off"
-    cmake ../
-  fi
+#  if [ $UDEV == "yes" ]; then
+#    echo "running cmake with udev on"
+#    cmake ../ -DINSTALL_UDEV_RULES=ON
+#  else
+#    echo "running cmake with udev off"
+#    cmake ../
+#  fi
+  echo "running cmake"
+  cmake ../
   echo "running make"
   make
   echo "installing"
@@ -86,7 +105,8 @@ function autotool_build () {
 function install_udev {
   if [ $UDEV == "yes" ]; then
     echo "Installing udev rules"
-    sudo make install-udev-rules
+#    sudo make install-udev-rules
+    sudo make install udev
   fi
 }
 
@@ -128,7 +148,7 @@ function check_for_previous_build {
   fi
 }
 
-# end of functions
+# ===== end of functions =====
 
 #exit 0
 
@@ -138,7 +158,7 @@ function check_for_previous_build {
 check_for_missing_packages
 
 # Detect the desired make style command ('auto' or 'cmake')
-get_make_style_cmd $1
+get_make_style_cmd ${MSTYLE}
 
 # Show the detected settings, in case we stop early
 echo "BUILD: $BUILD"
@@ -182,7 +202,10 @@ case "$CMD" in
 
 esac
 
+echo "Final Checklist"
+echo "Remember to black list the dvb module: 'dvb_usb_rtl28xxu'"
+echo "You may have to logout and login to get udev rules to reload"
+echo "run 'rtl_test' to test if things are installed correctly"
+
 # we done
 exit 0
-
-
